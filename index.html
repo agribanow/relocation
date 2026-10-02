@@ -1,0 +1,361 @@
+<!DOCTYPE html>
+<html lang="uk">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Іспанія v2.8 — кластери з легендою</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Archivo:wdth,wght@75..125,400..800&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg:#EFF1ED; --card:#FFF; --ink:#1E2A26; --muted:#5C6B64;
+    --line:#DDE2DC; --good:#2F6B5E; --mid:#C08A2E; --bad:#B0452F;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  html{-webkit-text-size-adjust:100%}
+  body{background:var(--bg);color:var(--ink);font-family:'Inter',system-ui,sans-serif;font-size:14px;line-height:1.5;padding:20px clamp(8px,1.5vw,28px) 60px}
+  .wrap{max-width:1900px;margin:0 auto}
+  header{margin-bottom:20px}
+  .eyebrow{font-family:'Archivo',sans-serif;font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--good);font-weight:700;margin-bottom:6px}
+  h1{font-family:'Archivo',sans-serif;font-variation-settings:'wdth' 115;font-weight:800;font-size:clamp(24px,4vw,36px);line-height:1.08;letter-spacing:-.01em}
+  .sub{color:var(--muted);margin-top:8px;max-width:780px;font-size:13.5px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:14px;overflow:hidden;box-shadow:0 1px 2px rgba(30,42,38,.05)}
+
+  .top{display:grid;grid-template-columns:minmax(340px,520px) 1fr;gap:14px;align-items:start;margin-bottom:14px}
+  @media(max-width:900px){.top{grid-template-columns:1fr}}
+  .map-card{padding:10px 10px 4px}
+  svg{display:block;width:100%;height:auto}
+  .spain,.isle{fill:#F7F8F5;stroke:#B9C4BC;stroke-width:2}
+  .inset-box{fill:none;stroke:#C9D2CB;stroke-dasharray:5 4;stroke-width:1.5}
+  .inset-lbl{font-family:'Archivo',sans-serif;font-size:12px;fill:var(--muted);font-weight:700;letter-spacing:.08em}
+  .marker{cursor:pointer}
+  .marker circle{stroke:#fff;stroke-width:2}
+  .marker.active circle{stroke:var(--ink);stroke-width:2.5}
+  .marker.dim{opacity:.3}
+  .marker text{fill:#fff;font-family:'Archivo',sans-serif;font-weight:700;font-size:10px;text-anchor:middle;dominant-baseline:central;pointer-events:none}
+  #readout{text-align:center;padding:8px 6px 12px;font-size:13px;color:var(--muted);font-family:'Archivo',sans-serif;min-height:34px}
+  #readout b{color:var(--ink);font-size:14.5px}
+  .legend{display:flex;flex-wrap:wrap;gap:12px;align-items:center;padding:0 6px 10px;justify-content:center;color:var(--muted);font-size:11.5px}
+  .legend .sw{display:inline-block;width:10px;height:10px;border-radius:50%;margin-right:5px;vertical-align:-1px}
+
+  .side{padding:16px 18px;font-size:12.5px;line-height:1.6;color:var(--muted)}
+  .side h2{font-family:'Archivo',sans-serif;font-size:13px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);margin-bottom:8px}
+  .side b{color:var(--ink)}
+  .side p{margin-bottom:8px}
+
+  .table-scroll{overflow:auto;-webkit-overflow-scrolling:touch;max-height:78vh}
+  table{border-collapse:collapse;width:100%;min-width:1920px}
+  th,td{padding:8px 8px;border-bottom:1px solid var(--line);text-align:left;vertical-align:top;font-size:11.5px}
+  thead th{
+    font-family:'Archivo',sans-serif;font-size:9.5px;font-weight:700;text-transform:uppercase;
+    letter-spacing:.06em;color:var(--muted);background:#F7F8F5;position:sticky;top:0;z-index:3;
+    white-space:nowrap;cursor:pointer;user-select:none;
+  }
+  thead th:hover{color:var(--ink)}
+  thead th .arr{font-size:9px;opacity:.7}
+  tbody th{
+    font-family:'Archivo',sans-serif;font-weight:700;font-size:12px;white-space:nowrap;
+    background:var(--card);position:sticky;left:0;z-index:2;border-right:1px solid var(--line);min-width:112px;
+  }
+  tbody th .region{display:block;font-family:'Inter';font-weight:400;font-size:9px;color:var(--muted);margin-top:1px}
+  tbody tr{cursor:pointer}
+  tbody tr.active,tbody tr.active th{background:#EEF4F1}
+  .chip{display:inline-block;font-weight:600;font-size:10px;padding:2px 6px;border-radius:20px;color:#fff;white-space:nowrap}
+  td.money{font-family:'Archivo',sans-serif;font-weight:700;font-size:13px;white-space:nowrap}
+  td.money small{display:block;font-family:'Inter';font-weight:400;font-size:9px;color:var(--muted)}
+  td.towns{min-width:190px;max-width:240px;line-height:1.45;font-size:11px}
+  .subj{display:inline;font-size:10px;color:var(--muted);line-height:1.35}
+  .cb{display:inline-flex;align-items:center;justify-content:center;min-width:22px;height:18px;border-radius:4px;font-family:'Archivo';font-weight:700;font-size:9.5px;color:#fff;margin:1px 2px 1px 0;padding:0 3px}
+  .cb0{background:#C9D2CB;color:#7A867F}
+  .cb1{background:var(--mid)}
+  .cb2{background:var(--good)}
+  td.clusters{min-width:150px}
+  td.clusters .cov{display:block;font-size:9.5px;color:var(--muted);margin-top:2px}
+  .cl-legend{margin-top:14px;padding:14px 18px;font-size:12px;line-height:1.7;color:var(--muted)}
+  .cl-legend h2{font-family:'Archivo',sans-serif;font-size:12px;text-transform:uppercase;letter-spacing:.08em;color:var(--ink);margin-bottom:8px}
+  .cl-legend .row{display:flex;gap:8px;align-items:baseline;margin-bottom:2px}
+  .cl-legend .row .cb{flex:0 0 auto}
+  .cl-legend .colors{margin-top:8px;padding-top:8px;border-top:1px solid var(--line)}
+  tr.excluded{opacity:.45}
+  tr.excluded th .exl{display:inline-block;background:#7A867F;color:#fff;border-radius:4px;font-size:8.5px;padding:1px 5px;margin-left:5px;vertical-align:1px}
+  td.towns .warn{display:block;color:var(--bad);font-size:9.5px;margin-top:2px}
+  td.total{font-family:'Archivo',sans-serif;font-weight:800;font-size:16px;text-align:center;vertical-align:middle}
+  td.total small{display:block;font-family:'Inter';font-weight:400;font-size:9px;color:var(--muted)}
+  .notes{margin-top:16px;color:var(--muted);font-size:11.5px;line-height:1.6;max-width:980px}
+  .notes b{color:var(--ink)}
+  @media(max-width:640px){body{padding:14px 6px 50px} th,td{padding:7px 6px}}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="eyebrow">Релокація · Іспанія · жовтень 2026 · v2.8 · кластери + реальні cortes 13 універів</div>
+    <h1>50 провінцій: скільки коштує жити в оренді</h1>
+    <p class="sub">Оцінки 1–5 (5 — краще). Додано: нетто автономо з €90k/рік за регіональним IRPF, місячний бюджет сімʼї 2+2 (будинок, авто, державна школа, без іпотеки) і топ-3 населені пункти під профіль і оренда будинку 3–4 спальні (середнє по цих трьох зонах). «Разом з орендою» — повні місячні витрати; «вільно» — що лишається з нетто. Фактор «Універ» перераховано за кластерним підходом: покриття 7 кластерів спеціальностей публічними універами в зоні щоденної поїздки (агреговано по зоні: UMU+UPCT, UA+UMH, US+UPO) × якість за U-Ranking 2026 (Docencia+Inserción, не Investigación). Кластери: 1 ІТ/дані/ШІ · 2 електроніка/телеком · 3 промислова інж. · 4 аеро/морська · 6 архітектура/дизайн · 17 бізнес/економіка · 21 медіа/туризм. Ваги за працевлаштуванням: 1–4 повна, 6 — 0.75, 17/21 — 0.5. Мадрид, Барселона і Валенсія виключені рішенням (сірі рядки). ★ = Inserción G1. Σ/45.</p>
+  </header>
+
+  <div class="top">
+    <div class="card map-card">
+      <svg id="map" viewBox="0 0 1000 800" role="img" aria-label="Карта Іспанії, 50 провінцій"></svg>
+      <div class="legend">
+        <span><span class="sw" style="background:var(--good)"></span>34+</span>
+        <span><span class="sw" style="background:var(--mid)"></span>28–33</span>
+        <span><span class="sw" style="background:var(--bad)"></span>&lt;28</span>
+      </div>
+      <div id="readout">Тапни маркер — підсвітиться рядок</div>
+    </div>
+    <div class="card side">
+      <h2>Як читати гроші</h2>
+      <p><b>«На руки з €90k»</b> — річний дохід автономо €90k мінус cuota de autónomos (~€7.3k/рік на цьому доході) мінус IRPF за шкалою автономії (державна + регіональна половини, база ≈€80k після відрахувань, мінімуми без дітей — з двома дітьми буде на €600–900 більше скрізь однаково). Форальні режими Наварри та Країни Басків пораховані за їхніми шкалами.</p>
+      <p><b>«Бюджет сімʼї»</b> — місячні витрати 2 дорослих + 2 дітей: продукти, комуналка будинку, авто (пальне, страховка, ITV), державна школа (матеріали, їдальня, гуртки), звʼязок, дозвілля. Без іпотеки/оренди — житло дивись через €/м².</p>
+      <p><b>«Оренда будинку»</b> — 3–4 спальні, середнє саме по трьох зонах з колонки міст (не по провінції). <b>«Разом з орендою»</b> = бюджет + оренда. <b>«Вільно»</b> = нетто/12 − разом: у Мурсії ≈ +€1.0k/міс, у Валенсії ≈ −€0.2k, у Малазі ≈ −€0.8k — червоне означає, що сімʼя з €90k живе в мінус.</p>
+    </div>
+  </div>
+
+  <div class="card">
+    <div class="table-scroll">
+      <table id="tbl">
+        <thead>
+          <tr>
+            <th data-k="name">Провінція</th>
+            <th data-k="0">1 · IRPF</th>
+            <th data-k="net">На руки з €90k</th>
+            <th data-k="1">2 · Мова</th>
+            <th data-k="2">3 · Варт. життя</th>
+            <th data-k="bud">Бюджет сімʼї 2+2</th>
+            <th data-k="rent">Оренда будинку (топ-3)</th>
+            <th data-k="all">Разом з орендою</th>
+            <th data-k="3">4 · Універ (U-Ranking)</th>
+            <th data-k="cl">Кластери 1–7</th>
+            <th data-k="4">5 · Хайп</th>
+            <th data-k="5">6 · €/м²</th>
+            <th data-k="6">7 · Лиха</th>
+            <th data-k="7">8 · Погода</th>
+            <th data-k="8">9 · Військові бази</th>
+            <th>Топ-3 міста під профіль</th>
+            <th data-k="tot">Σ/45 <span class="arr">▼</span></th>
+          </tr>
+        </thead>
+        <tbody></tbody>
+      </table>
+    </div>
+  </div>
+
+  <div class="card cl-legend">
+    <h2>Легенда кластерів спеціальностей</h2>
+    <div class="row"><span class="cb cb2">1</span> Інформатика · дані · ШІ · кібербезпека</div>
+    <div class="row"><span class="cb cb2">2</span> Електроніка · телеком · робототехніка</div>
+    <div class="row"><span class="cb cb2">3</span> Промислова інженерія: механічна, електрична, енергетична, хімічна</div>
+    <div class="row"><span class="cb cb2">4</span> Аерокосмічна · морська · автомобільна (найдефіцитніший — існує в ~8 зонах країни)</div>
+    <div class="row"><span class="cb cb2">6</span> Архітектура · дизайн</div>
+    <div class="row"><span class="cb cb2">17</span> Економіка · бізнес · фінанси · маркетинг</div>
+    <div class="row"><span class="cb cb2">21</span> Комунікації · медіа · реклама · туризм</div>
+    <div class="colors">Колір бейджа: <span class="cb cb2">n</span> сильна програма в ≤50 км (реальний конкурс або підтверджена школа) · <span class="cb cb1">n</span> програма є · <span class="cb cb0">n</span> немає. Вага в рахунку покриття: кластери 1–4 ×1.0, 6 ×0.75, 17 і 21 ×0.5 (за даними працевлаштування). Наведи мишку на бейдж у таблиці — випливе підказка з розшифровкою.</div>
+  </div>
+
+  <div class="notes">
+    <p><b>Методика.</b> IRPF/мова — рівень автономії; €/м² — idealista, липень–серпень 2026, середні по провінції. Нетто — моя модель з округленням, для рішення потрібен розрахунок гестора (retroactive alta, tarifa plana і reducción por inicio 20% можуть суттєво підняти перші 1–2 роки). Міста відібрані під критерії: зона односімейних будинків/урбанізацій, ≤50 км до кампусу, школи+медицина+сервіси в радіусі 15 хв, без кримінальних барріо, без люксових цін. «⚠» — де критерій універу виконується формально (слабкий кампус) або на межі. Рівні ваги досі преміюють «тихі» провінції — дивись профіль, не лише суму. Колонки CS/дизайн: 5 — національний топ за предметними рейтингами (QS by Subject / Shanghai GRAS 2026), 3 — добротний середній факультет, 1 — відсутній або формальний; для дизайну враховано й держ. школи EASD поза університетською системою. Notas de corte в колонках CS/дизайн — прохідний бал останнього зарахованого (2025–26, орієнтовно ±0.3, щороку змінюється; шкала до 14): 5–8 — вступ вільний, 9–11 — конкурентно, 11.5+ — жорстко; відсутність corte = програми немає або місця не заповнюються. Corte — ринкова ціна факультету: високий бал підтверджує якість програми. Вартість навчання — державна ціна 60 кредитів першого зарахування (matrícula), встановлюється автономією, однакова для своїх і іноземців-резидентів ЄС; перескладання дорожчають у 2–4 рази; ~30% студентів мають повну beca (безкоштовно + стипендія) за доходом сім'ї. Приватні виші вказані окремо. Джерела кластерного шару: U-Ranking 2026 (Fundación BBVA–Ivie) — групи Docencia/Investigación/Inserción; notas de corte по кластерах з файлу «Марина» v4: UNIZAR, UM (2025-26 фінальні), UPCT/US/UPO/UGR/UMA/UA/UMH/UJI (2026-27, верхня межа — до вересня падають на 0.3–2), UDC/UVigo (educaweb 2026-27), UVa/ULE (2025-26 фінальні з plazas), UniOvi (2024-25). Провінції без цифр у клітинці универу — мої ≈ оцінки; працевлаштування за напрямами — когорта 2019-20 через 4 роки (інж. кластери: індекс 75–89, €35–43k; кластери 17/21: відповідність освіті 17–45%, зарплати −25–40%). Військовий фактор: 1–2 — стратегічні цілі першого порядку (бази США/NATO, штаби, підводні човни, великі авіабази), 3 — помітні армійські об'єкти, 4–5 — гарнізони або нічого; оцінка суб'єктивна, відстань бази від конкретного міста в межах провінції може сильно відрізнятись.</p>
+  </div>
+</div>
+
+<script>
+/* ---- автономії: IRPF + мова + нетто з €90k (€/рік) ---- */
+const COMM = {
+  gal:{n:"Galicia",        irpf:[4,"до ~47%"],        lang:[3,"галісійська (м'яка)"], net:57.4},
+  ast:{n:"Asturias",       irpf:[2,"до ~50%"],        lang:[5,"кастильська"],         net:55.9},
+  cant:{n:"Cantabria",     irpf:[3,"до ~48%"],        lang:[5,"кастильська"],         net:56.8},
+  pv:{n:"País Vasco",      irpf:[3,"форальний ~49%"], lang:[1,"еускера"],             net:56.3},
+  nav:{n:"Navarra",        irpf:[2,"форальний ~52%"], lang:[3,"еускера (зони)"],      net:55.1},
+  rio:{n:"La Rioja",       irpf:[4,"до ~46.5%"],      lang:[5,"кастильська"],         net:57.1},
+  ara:{n:"Aragón",         irpf:[3,"до ~48%"],        lang:[5,"кастильська"],         net:56.5},
+  cat:{n:"Catalunya",      irpf:[2,"до ~50%"],        lang:[1,"каталонська імерсія"], net:55.8},
+  cv:{n:"C. Valenciana",   irpf:[2,"до ~54%"],        lang:[2,"валенсійська"],        net:55.6},
+  mur:{n:"R. de Murcia",   irpf:[4,"до ~47%"],        lang:[5,"кастильська"],         net:57.3},
+  clm:{n:"C.-La Mancha",   irpf:[3,"до ~47%"],        lang:[5,"кастильська"],         net:57.0},
+  cyl:{n:"C. y León",      irpf:[4,"до ~46.5%"],      lang:[5,"кастильська"],         net:57.2},
+  ext:{n:"Extremadura",    irpf:[3,"до ~48%"],        lang:[5,"кастильська"],         net:56.7},
+  and:{n:"Andalucía",      irpf:[4,"до ~47.5%"],      lang:[5,"кастильська"],         net:57.5},
+  mad:{n:"C. de Madrid",   irpf:[5,"до ~45%"],        lang:[5,"кастильська"],         net:58.0},
+  bal:{n:"Illes Balears",  irpf:[2,"до ~49.5%"],      lang:[1,"каталонська"],         net:56.3},
+  can:{n:"Canarias",       irpf:[4,"~46.5% + IGIC"],  lang:[5,"кастильська"],         net:57.0}
+};
+
+/* ---- провінції ----
+ f: [вартість, універ, хайп, €/м², лиха, погода]
+ b: бюджет сім'ї k€/міс; t: топ-3 міста; w: попередження */
+const P = [
+ {id:"coruna",n:"A Coruña",c:"gal",lon:-8.41,lat:43.36,b:2.7,r:1.3,cs:[4,"FIC UDC — стара школа інформатики · corte ~10.7 (IA ~12.4) · ≈€840/рік"],ds:[2,"без BBAA (він у Понтеведрі)"],mil:[2,"Ferrol: військово-морська база + верфі Navantia"],u4:[4,"UDC · IA 10.5, CDIA 10.6, CS 9.2, архіт 9.95, диз.інд(Ferrol) 9.8, ComAV 9.7; naval Ferrol 6.2 (doble 12.0)"],cl:[2, 1, 1, 1, 2, 1, 2],t:"Oleiros · Culleredo · Cambre",f:[[4,"помірна"],[4,"UDC + USC 60км"],[5,"тихо"],[3,"€2.3k"],[4,"шторми"],[3,"дощі, м'яко"]]},
+ {id:"lugo",n:"Lugo",c:"gal",lon:-7.55,lat:43.01,b:2.2,r:0.7,cs:[1,"немає"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[1,"кампус USC: агро/ліс"],cl:[0, 0, 1, 0, 0, 1, 0],t:"Outeiro de Rei · Rábade · Castro Ribeiras",w:"кампус USC обмежений",f:[[5,"дешево"],[2,"кампус USC"],[5,"нуль"],[5,"€1.1k"],[4,"пожежі"],[2,"холодно, дощі"]]},
+ {id:"ourense",n:"Ourense",c:"gal",lon:-7.86,lat:42.34,b:2.2,r:0.7,cs:[3,"ESEI UVigo — кампус інформатики · corte ~9 · ≈€840/рік"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[2,"UVigo · аероспейс 12.3–13.0 (конкурс рівня Севільї!), ESEI(CS) — дані н.д."],cl:[1, 0, 0, 2, 0, 1, 0],t:"Barbadás · Pereiro de Aguiar · San Cibrao",w:"кампус UVigo обмежений",f:[[5,"дешево"],[2,"кампус UVigo"],[5,"нуль"],[5,"€1.2k"],[3,"пожежі щоліта"],[3,"спекотні літа"]]},
+ {id:"pontevedra",n:"Pontevedra",c:"gal",lon:-8.64,lat:42.43,b:2.6,r:1.1,cs:[2,"інформатика в Оуренсе; телеком у Vigo · corte телеком ~9.5 · ≈€840/рік"],ds:[4,"BBAA UVigo + мода ESDEMGA · corte BBAA ~9.8 · ≈€590/рік"],mil:[3,"Marín: військово-морська академія"],u4:[4,"UVigo · Vigo: Mecánica 10.5, AUTOMOCIÓN 11.0 (єдиний grado в країні), орг. 9.6; Pontevedra: Diseño 9.3, Publicidad 8.5"],cl:[0, 2, 2, 2, 2, 1, 2],t:"Nigrán · Gondomar · Poio",f:[[4,"помірна"],[3,"UVigo ~800"],[4,"Rías, легкий"],[3,"€2.0k"],[4,"шторми"],[3,"дощі, м'яко"]]},
+ {id:"asturias",n:"Asturias",c:"ast",lon:-5.84,lat:43.36,b:2.5,r:1.1,cs:[3,"UniOvi Informática, середньо · corte ~10.5 · ≈€850/рік"],ds:[2,"лише Escuela de Arte"],mil:[4,"дрібні об'єкти"],u4:[4,"UniOvi · Software 10.5, CDIA 10.2, dobles 13.3+; ВСЯ класична інженерія 5.0 (Mecánica 240 місць без конкурсу), €771/рік"],cl:[2, 1, 2, 1, 0, 1, 1],t:"La Fresneda (Siero) · Llanera · Somió (Gijón)",f:[[4,"помірна"],[4,"UniOvi ~600"],[5,"тихо"],[4,"€1.6k"],[4,"спокійно"],[3,"зелено, дощі"]]},
+ {id:"cantabria",n:"Cantabria",c:"cant",lon:-3.80,lat:43.46,b:2.8,r:1.3,cs:[3,"UC, середньо · corte ~10.3 · ≈€900/рік"],ds:[2,"слабко"],mil:[4,"дрібні об'єкти"],u4:[4,"UC D2/I4/Ins2 · CS, Caminos, промінж"],cl:[2, 1, 2, 1, 0, 1, 1],t:"Bezana · Camargo · El Astillero",f:[[3,"середня"],[4,"UC ~600"],[4,"літній"],[3,"€2.4k"],[4,"спокійно"],[3,"дощі, м'яко"]]},
+ {id:"vizcaya",n:"Bizkaia",c:"pv",lon:-2.92,lat:43.26,b:3.0,r:1.8,cs:[4,"EHU + Deusto · corte ~9.5 · ≈€1,050/рік"],ds:[4,"BBAA EHU (кампус Leioa) · corte Creación y Diseño ~11 · ≈€1,050/рік"],mil:[5,"без великих баз"],u4:[5,"EHU D2/I4/Ins1★ · промінж, Sarriko(економ), медіа, дизайн"],cl:[1, 1, 2, 1, 2, 2, 2],t:"Sopela · Berango · Leioa",f:[[2,"висока"],[4,"EHU+Deusto"],[4,"низький"],[2,"€2.8k"],[4,"локальні повені"],[3,"дощі"]]},
+ {id:"gipuzkoa",n:"Gipuzkoa",c:"pv",lon:-1.98,lat:43.32,b:3.3,r:2.2,cs:[4,"Informática EHU в Доностії + Tecnun · corte ~10.5 · ≈€1,050/рік"],ds:[2,"слабко"],mil:[5,"без великих баз"],u4:[4,"EHU Donostia · CS-факультет, архітектура"],cl:[2, 1, 1, 0, 2, 1, 1],t:"Astigarraga · Usurbil · Zarautz",w:"ціни близькі до космосу",f:[[1,"найвища півночі"],[4,"EHU+Tecnun"],[4,"гастро-хайп"],[1,"€3.6k"],[4,"спокійно"],[3,"найдощовіше"]]},
+ {id:"alava",n:"Álava",c:"pv",lon:-2.67,lat:42.85,b:2.8,r:1.4,cs:[3,"Ing. Informática Vitoria · corte ~9.5 · ≈€1,050/рік"],ds:[2,"Escuela de Arte"],mil:[4,"казарми Araca (Vitoria)"],u4:[3,"EHU Vitoria · базові інженерії"],cl:[1, 1, 1, 0, 0, 1, 0],t:"Armentia (Vitoria) · Iruña de Oca · Alegría-Dulantzi",f:[[3,"середня"],[3,"кампус EHU"],[5,"нуль"],[3,"€2.2k"],[5,"спокійно"],[3,"холоднувато"]]},
+ {id:"navarra",n:"Navarra",c:"nav",lon:-1.64,lat:42.82,b:2.9,r:1.5,cs:[3,"UPNA + Tecnun поруч · corte UPNA ~10 · UPNA ≈€1,100/рік"],ds:[3,"дизайн UNAV (приватний, добрий)"],mil:[3,"полігон Bardenas Reales (авіація NATO)"],u4:[3,"UPNA D2/I5/Ins2 · CS+промінж"],cl:[2, 1, 2, 0, 0, 1, 0],t:"Gorraiz (Egüés) · Zizur Mayor · Mutilva",f:[[3,"середня"],[5,"UNAV топ-300"],[5,"тихо"],[3,"€2.1k"],[5,"спокійно"],[3,"континент. м'який"]]},
+ {id:"rioja",n:"La Rioja",c:"rio",lon:-2.45,lat:42.47,b:2.5,r:1.0,cs:[3,"UR + хаб UNIR · corte ~8.5 · ≈€950/рік"],ds:[3,"ESDIR — відома держ. школа дизайну"],mil:[4,"Agoncillo: вертолітна база"],u4:[3,"UR D2/I6/Ins2 · вузький набір"],cl:[1, 0, 1, 0, 1, 1, 1],t:"Villamediana de Iregua · Lardero · Fuenmayor",f:[[4,"низька"],[2,"UR слабкий"],[5,"тихо"],[4,"€1.5k"],[5,"спокійно"],[3,"континентальний"]]},
+ {id:"huesca",n:"Huesca",c:"ara",lon:-0.41,lat:42.14,b:2.4,r:0.9,cs:[1,"немає"],ds:[1,"немає"],mil:[4,"гірські війська Jaca"],u4:[1,"кампус UNIZAR: ADE 5.0"],cl:[0, 0, 0, 0, 0, 1, 0],t:"Chimillas · Almudévar · Monzón",w:"кампус Unizar обмежений",f:[[4,"низька"],[2,"кампус Unizar"],[4,"лижний"],[4,"€1.7k"],[4,"гірські"],[3,"гори, холодно"]]},
+ {id:"zaragoza",n:"Zaragoza",c:"ara",lon:-0.88,lat:41.65,b:2.7,r:1.2,cs:[4,"Unizar EINA, сильна · corte ~11 · ≈€1,100/рік"],ds:[3,"ESDA + дизайн в EINA"],mil:[2,"авіабаза Zaragoza + полігон San Gregorio (найбільший в Іспанії)"],u4:[5,"UNIZAR D2/I5/Ins2 · EINA повний інж. стек (вступ 5.0-7.6!), архіт. 9.6, диз.інд. 9.3"],cl:[2, 1, 2, 0, 2, 2, 1],t:"Cuarte de Huerva · María de Huerva · Utebo",f:[[3,"середня"],[4,"Unizar ~500"],[5,"тихо"],[3,"€2.35k"],[5,"спокійно"],[3,"сьєрсо, контрасти"]]},
+ {id:"teruel",n:"Teruel",c:"ara",lon:-1.11,lat:40.34,b:2.2,r:0.7,cs:[1,"немає"],ds:[3,"BBAA Unizar — кампус у Теруелі · corte BBAA ~9.5 · ≈€1,000/рік"],mil:[5,"нічого значного"],u4:[2,"кампуси UNIZAR: CS 5.0, електроніка 7.1, BBAA"],cl:[1, 1, 0, 0, 1, 1, 0],t:"Cella · Mora de Rubielos · Teruel (околиці)",w:"універ мінімальний",f:[[5,"найдешевше"],[1,"мінімум"],[5,"нуль"],[5,"€1.0k"],[5,"спокійно"],[1,"найхолодніше"]]},
+ {id:"barcelona",n:"Barcelona",c:"cat",lon:2.17,lat:41.39,b:3.5,r:2.2,cs:[5,"UPC топ-165 + BSC суперкомп'ютер · ≈€1,107/рік"],ds:[5,"ELISAVA/BAU/EINA + UB — столиця дизайну · corte UB ~10.5–11 · UB ≈€1,107/рік; ELISAVA приват ≈€11k"],mil:[4,"дрібні гарнізони"],u4:[5,"UB/UPC/UAB — повне покриття 7/7"],cl:[2, 2, 2, 2, 2, 2, 2],ex:1,t:"La Garriga · Cardedeu · Sant Cugat (дорого)",f:[[1,"дуже висока"],[5,"UB топ-200"],[2,"перегрітий"],[2,"€2.9k"],[4,"посуха"],[4,"добре"]]},
+ {id:"girona",n:"Girona",c:"cat",lon:2.82,lat:41.98,b:3.0,r:1.5,cs:[3,"UdG, середньо · corte ~9 · ≈€1,100/рік"],ds:[2,"слабко"],mil:[4,"Sant Climent Sescebes (бригада)"],u4:[3,"UdG D3/I3/Ins2"],cl:[1, 1, 1, 0, 1, 1, 1],t:"Sant Gregori · Fornells de la Selva · Banyoles",f:[[3,"середня"],[3,"UdG ~1000"],[2,"Коста-Брава, рос."],[3,"€2.3k"],[4,"пожежі"],[4,"добре"]]},
+ {id:"lleida",n:"Lleida",c:"cat",lon:0.62,lat:41.62,b:2.4,r:1.0,cs:[3,"UdL, середньо · corte ~8.5 · ≈€1,100/рік"],ds:[1,"немає"],mil:[4,"академія Talarn"],u4:[3,"UdL D2/I4/Ins1★ · широта без глибини"],cl:[1, 1, 1, 0, 1, 1, 1],t:"Alpicat · Torrefarrera · Almacelles",f:[[4,"низька"],[3,"UdL ~800"],[5,"нуль"],[5,"€1.2k"],[4,"спокійно"],[2,"туман і спека"]]},
+ {id:"tarragona",n:"Tarragona",c:"cat",lon:1.25,lat:41.12,b:2.8,r:1.4,cs:[3,"URV, середньо · corte ~9 · ≈€1,100/рік"],ds:[2,"EADT"],mil:[5,"без великих баз"],u4:[3,"URV D3/I2/Ins2 · хімія — дослідн. сила"],cl:[1, 1, 2, 0, 1, 1, 2],t:"Altafulla · Torredembarra · Cambrils",f:[[3,"середня"],[4,"URV ~700"],[3,"Салоу, рос."],[3,"€2.0k"],[4,"хім. промзона"],[4,"добре"]]},
+ {id:"castellon",n:"Castelló",c:"cv",lang:[1,"валенсійська++"],lon:-0.03,lat:39.98,b:2.5,r:1.3,cs:[3,"UJI, середньо · corte ~9.5 · ≈€960/рік"],ds:[3,"сильний пром. дизайн UJI (інженерний) · corte ~10.3 · ≈€960/рік"],mil:[5,"без великих баз"],u4:[3,"UJI · CS 7.8, robótica 8.2, GITI 9.8, диз.інд 6.7 — найнижчий у вибірці, Int.Business 11.0, Periodismo 9.6"],cl:[1, 1, 1, 0, 1, 1, 2],t:"Benicàssim · Borriol · Almassora",f:[[4,"низько-середня"],[2,"UJI ~1100"],[4,"низький"],[4,"€1.6k"],[3,"DANA слабше"],[5,"м'який середземн."]]},
+ {id:"valencia",n:"València",c:"cv",lon:-0.38,lat:39.47,b:2.9,r:1.9,cs:[4,"UPV топ-250 + UV · corte UPV ~11.8 · ≈€960/рік"],ds:[5,"UPV №1 Іспанії (топ-150 світу) + EASD València · corte Diseño UPV ~12.5 · ≈€960/рік"],mil:[2,"Bétera: штаб NATO NRDC-ESP + авіакрило Manises"],u4:[5,"UPV/UV — повне покриття 7/7"],cl:[2, 2, 2, 2, 2, 2, 2],ex:1,t:"L'Eliana · Bétera (Torre en Conill) · Puçol (Alfinach)",w:"у Bétera — штаб NATO NRDC-ESP",f:[[3,"росте швидко"],[5,"UV+UPV топ-500"],[2,"укр. хаб + хайп"],[3,"€2.2k"],[1,"DANA, повені"],[5,"м'який середземн."]]},
+ {id:"alicante",n:"Alacant",c:"cv",lon:-0.48,lat:38.35,b:2.8,r:1.5,cs:[4,"UA — добра інформатика, NLP-групи · corte ~10.5 · ≈€960/рік"],ds:[3,"EASDA + мультимедіа UA · Ing. Multimedia UA, corte ~10 · ≈€960/рік"],mil:[4,"дрібні об'єкти"],u4:[4,"UA+UMH(Ельче 25км) · АЕРО UA 12.4(!), IA 10.3, robótica 9.9, CS 8.6, архіт 9.2; UMH: Mecánica 9.1, ComAV 8.1, Fashion 7.7"],cl:[2, 1, 1, 2, 2, 1, 2],t:"Sant Joan d'Alacant · Mutxamel · Busot",w:"уникати пояс Торрев'єхи",f:[[3,"середня"],[4,"UA ~600"],[1,"Торрев'єха: столиця рос. діаспори"],[2,"€2.5k"],[2,"Vega Baja повені"],[5,"найсухіший берег"]]},
+ {id:"murcia",n:"Múrcia",c:"mur",lon:-1.13,lat:37.99,b:2.5,r:1.3,cs:[3,"UMU, середній рівень · corte ~9.8 · ≈€950/рік"],ds:[3,"BBAA UMU + ESD Murcia · corte BBAA ~8 · ≈€900/рік"],mil:[2,"Cartagena: база підводних човнів + верф; авіабаза Alcantarilla"],u4:[5,"UMU+UPCT(Картахена) Ins1★ · Datos 11.5–12.1, CS 8.2, телеком 8.8, Mecánica 10.7, Naval 9.3, архіт. 10.4, диз.інд 11.2 (doble 12.9)"],cl:[2, 2, 2, 2, 2, 1, 1],t:"Altorreal · La Alcayna · Santo Ángel",f:[[4,"низька"],[4,"UMU ~700"],[5,"мінімальний"],[5,"€1.5k"],[3,"посуха, сейсміка"],[3,"спекотне літо"]]},
+ {id:"albacete",n:"Albacete",c:"clm",lon:-1.86,lat:38.99,b:2.3,r:0.9,cs:[3,"ESII UCLM — пристойна регіональна · corte ~8.5 · ≈€800/рік"],ds:[2,"лише Escuela de Arte"],mil:[2,"Los Llanos: авіабаза NATO TLP (льотна школа) + крило Eurofighter"],u4:[2,"UCLM: ESII(CS)+промінж"],cl:[1, 1, 1, 0, 0, 1, 0],t:"Chinchilla de Montearagón · Aguas Nuevas · La Gineta",w:"кампус UCLM на межі топ-1500",f:[[5,"найнижча"],[2,"UCLM ~1300"],[5,"нуль"],[5,"€1.2k"],[5,"найспокійніше"],[2,"континентальний"]]},
+ {id:"ciudadreal",n:"Ciudad Real",c:"clm",lon:-3.93,lat:38.99,b:2.2,r:0.8,cs:[3,"ESI UCLM · corte ~8 · ≈€800/рік"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[2,"UCLM: ESI(CS)+промінж"],cl:[1, 1, 1, 0, 0, 1, 0],t:"Poblete · Miguelturra · Carrión de Calatrava",f:[[5,"дешево"],[2,"UCLM гол. кампус"],[5,"нуль"],[5,"€0.9k"],[5,"спокійно"],[2,"спека/холод"]]},
+ {id:"cuenca",n:"Cuenca",c:"clm",lon:-2.13,lat:40.07,b:2.2,r:0.7,cs:[1,"немає"],ds:[4,"BBAA UCLM — відома арт-школа · corte BBAA ~8 · ≈€780/рік"],mil:[5,"нічого значного"],u4:[2,"UCLM: BBAA, телеком-АВ, журналістика"],cl:[0, 1, 0, 0, 2, 1, 1],t:"Villar de Olalla · Arcas · Cuenca (околиці)",w:"кампус UCLM обмежений",f:[[5,"дешево"],[1,"мінімум"],[5,"нуль"],[5,"€1.0k"],[5,"спокійно"],[2,"континентальний"]]},
+ {id:"guadalajara",n:"Guadalajara",c:"clm",lon:-3.16,lat:40.63,b:2.5,r:1.3,cs:[2,"UAH поруч · corte UAH ~9.7 · UAH ≈€1,400/рік"],ds:[1,"немає"],mil:[4,"дрібні об'єкти"],u4:[2,"UAH поруч (Алькала 30км)"],cl:[1, 1, 0, 0, 1, 1, 1],t:"Cabanillas del Campo · Valdeluz (Yebes) · Marchamalo",f:[[4,"спіловер Мадрида"],[2,"кампус UAH; Мадрид 55км"],[5,"тихо"],[4,"€1.5k"],[5,"спокійно"],[3,"континентальний"]]},
+ {id:"toledo",n:"Toledo",c:"clm",lon:-4.02,lat:39.86,b:2.4,r:1.1,cs:[2,"кампус UCLM, базово"],ds:[2,"слабко"],mil:[4,"піхотна академія"],u4:[3,"UCLM: аероспейс + промінж"],cl:[0, 1, 1, 2, 0, 1, 0],t:"Olías del Rey · Argés · Cobisa",f:[[4,"низька"],[2,"кампус UCLM"],[4,"туризм"],[4,"€1.4k"],[5,"спокійно"],[3,"спекотні літа"]]},
+ {id:"madrid",n:"Madrid",c:"mad",lon:-3.70,lat:40.42,b:3.6,r:2.0,cs:[5,"UPM/UAM/UC3M — топ країни · corte ~12–12.5 · ≈€1,400/рік"],ds:[5,"BBAA UCM + IED/ESNE · corte BBAA UCM ~11.5 · ≈€1,280/рік"],mil:[1,"Torrejón: NATO CAOC + урядові цілі столиці"],u4:[5,"UPM/UAM/UC3M — повне покриття 7/7"],cl:[2, 2, 2, 2, 2, 2, 2],ex:1,t:"Arroyomolinos · Valdemorillo · Rivas-Vaciamadrid",f:[[1,"найвища"],[5,"UAM/UCM топ-200"],[2,"перегрітий"],[1,"€4.0k"],[5,"спокійно"],[3,"сухий континент."]]},
+ {id:"avila",n:"Ávila",c:"cyl",lon:-4.70,lat:40.66,b:2.2,r:0.7,cs:[1,"немає"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[1,"EPS USAL: вузько"],cl:[0, 0, 1, 0, 0, 0, 0],t:"La Colilla · El Fresno · Ávila (околиці)",w:"лише приватний UCAV",f:[[5,"дешево"],[1,"мінімум"],[5,"нуль"],[5,"€1.1k"],[5,"спокійно"],[2,"1100м, холод"]]},
+ {id:"burgos",n:"Burgos",c:"cyl",lon:-3.70,lat:42.34,b:2.4,r:0.9,cs:[2,"UBU, базово · corte ~8.5 · ≈€1,050/рік"],ds:[1,"немає"],mil:[4,"Castrillo del Val (гарнізон)"],u4:[3,"UBU D3/I4/Ins2"],cl:[1, 1, 1, 0, 1, 1, 1],t:"Quintanadueñas · Cardeñajimeno · Sotopalacios",f:[[4,"низька"],[2,"UBU ~1500"],[5,"тихо"],[4,"€1.5k"],[5,"спокійно"],[2,"холодно"]]},
+ {id:"leon",n:"León",c:"cyl",lon:-5.57,lat:42.60,b:2.3,r:0.8,cs:[2,"ULE, базово · corte ~9 · ≈€1,050/рік"],ds:[2,"Escuela de Arte"],mil:[3,"база Ferral + авіаційна академія"],u4:[3,"ULE · АЕРОСПЕЙС 12.7 (60 місць, єдиний у CyL), Datos+IA 10.8 (35), CS 7.8 (100), Comercio Int 9.3"],cl:[1, 1, 1, 2, 0, 1, 1],t:"San Andrés del Rabanedo · Villaquilambre · Sariegos",f:[[5,"дешево"],[2,"ULE ~1300"],[5,"тихо"],[5,"€1.2k"],[3,"пожежі 2025"],[2,"холодно"]]},
+ {id:"palencia",n:"Palencia",c:"cyl",lon:-4.52,lat:42.01,b:2.2,r:0.8,cs:[1,"немає"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[1,"кампус UVa: агро"],cl:[0, 0, 1, 0, 0, 1, 0],t:"Villamuriel de Cerrato · Grijota · Venta de Baños",w:"кампус UVa обмежений",f:[[5,"дешево"],[2,"кампус UVa"],[5,"нуль"],[5,"€1.1k"],[5,"спокійно"],[2,"холодно"]]},
+ {id:"salamanca",n:"Salamanca",c:"cyl",lon:-5.66,lat:40.97,b:2.4,r:0.9,cs:[3,"USAL, група BISITE · corte ~9.8 · ≈€1,050/рік"],ds:[3,"BBAA USAL · corte BBAA ~9.5 · ≈€1,000/рік"],mil:[4,"авіабаза Matacán (навчальна)"],u4:[2,"USAL D3/I4/Ins2 · інженерій поруч немає (Béjar 70км)"],cl:[1, 0, 0, 0, 1, 1, 1],t:"Villamayor · Carbajosa de la Sagrada · Santa Marta de Tormes",f:[[4,"низька"],[4,"USAL ~600"],[4,"студ. туризм"],[4,"€1.5k"],[5,"спокійно"],[2,"континентальний"]]},
+ {id:"segovia",n:"Segovia",c:"cyl",lon:-4.11,lat:40.95,b:2.5,r:1.0,cs:[1,"немає держ."],ds:[2,"IE Design (приватний, дорогий)"],mil:[4,"артилерійська академія"],u4:[2,"кампус UVa · Publicidad — профільний кампус"],cl:[1, 0, 0, 0, 0, 1, 2],t:"Palazuelos de Eresma · La Lastrilla · San Cristóbal",w:"IE University — приватний/дорогий",f:[[4,"низька"],[2,"кампуси"],[4,"туризм вихідних"],[4,"€1.5k"],[5,"спокійно"],[2,"холодно"]]},
+ {id:"soria",n:"Soria",c:"cyl",lon:-2.46,lat:41.76,b:2.2,r:0.7,cs:[1,"немає"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[1,"кампус UVa: вузько"],cl:[0, 0, 1, 0, 0, 1, 0],t:"Golmayo (Camaretas) · Los Rábanos · Garray",w:"кампус UVa мінімальний",f:[[5,"дешево"],[1,"мінімум"],[5,"нуль"],[5,"€1.1k"],[5,"спокійно"],[1,"найхолодніша зима"]]},
+ {id:"valladolid",n:"Valladolid",c:"cyl",lon:-4.72,lat:41.65,b:2.5,r:1.0,cs:[3,"UVa, середньо · corte ~10.5 · ≈€1,050/рік"],ds:[2,"Escuela de Arte"],mil:[4,"дрібні об'єкти"],u4:[3,"UVa · CS 8.2, диз.інд 9.7, орг 9.5, архіт 8.9; вся класична інженерія + телеком 5.0* (вступ вільний)"],cl:[1, 1, 2, 0, 2, 1, 1],t:"Arroyo de la Encomienda · Simancas · Boecillo",f:[[4,"низька"],[4,"UVa ~700"],[5,"тихо"],[4,"€1.6k"],[5,"спокійно"],[2,"континентальний"]]},
+ {id:"zamora",n:"Zamora",c:"cyl",lon:-5.75,lat:41.50,b:2.1,r:0.7,cs:[1,"політех. кампус, базово · corte ~7.5 · ≈€1,050/рік"],ds:[1,"немає"],mil:[4,"Monte la Reina — план нової бригадної бази"],u4:[2,"EPS USAL: CS-СІ 7.5, будівництво"],cl:[1, 0, 1, 0, 1, 0, 1],t:"Morales del Vino · Coreses · Zamora (околиці)",w:"лише політех. кампус USAL",f:[[5,"дешево"],[1,"мінімум"],[5,"нуль"],[5,"€1.0k"],[4,"пожежі Кулебра"],[3,"м'якше за сусідів"]]},
+ {id:"caceres",n:"Cáceres",c:"ext",lon:-6.37,lat:39.48,b:2.2,r:0.8,cs:[3,"Politécnica UEx у Касересі · corte ~8.5 · ≈€950/рік"],ds:[1,"немає"],mil:[4,"дрібні об'єкти"],u4:[2,"UEx D3/I6/Ins2 · EPCC: CS+телематика"],cl:[1, 1, 0, 0, 0, 1, 0],t:"Casar de Cáceres · Malpartida de Cáceres · Sierra de Fuentes",f:[[5,"дешево"],[2,"кампус UEx"],[5,"нуль"],[5,"€1.1k"],[4,"спека, пожежі"],[3,"спекотні літа"]]},
+ {id:"badajoz",n:"Badajoz",c:"ext",lon:-6.97,lat:38.88,b:2.2,r:0.8,cs:[2,"UEx, базово"],ds:[1,"немає"],mil:[3,"авіабаза Talavera la Real + бригада Bótoa"],u4:[2,"UEx: промінж, медіа"],cl:[0, 1, 1, 0, 0, 1, 1],t:"Las Vaguadas (урб.) · Gévora · Valverde de Leganés",f:[[5,"дешево"],[3,"UEx ~1000"],[5,"нуль"],[5,"€1.2k"],[4,"спека"],[2,"45° влітку"]]},
+ {id:"huelva",n:"Huelva",c:"and",lon:-6.94,lat:37.26,b:2.4,r:1.0,cs:[2,"UHU, базово · corte ~8.7 · ≈€760/рік"],ds:[1,"немає"],mil:[4,"полігон El Arenosillo (INTA)"],u4:[2,"UHU D3/I6/Ins3"],cl:[1, 1, 1, 0, 0, 1, 1],t:"Aljaraque · Gibraleón · Punta Umbría",f:[[4,"низька"],[2,"UHU слабкий"],[4,"низький"],[4,"€1.6k"],[4,"пожежі Doñana"],[4,"тепло, вітер"]]},
+ {id:"sevilla",n:"Sevilla",c:"and",lon:-5.98,lat:37.39,b:2.8,r:1.4,cs:[4,"US ETSII — сильна · corte ~11 · ≈€760/рік"],ds:[4,"BBAA US + EASD · corte BBAA ~10.3 · ≈€760/рік"],mil:[1,"Morón: авіабаза США/NATO + Tablada"],u4:[5,"US+UPO · аеро 13.2, Inf+Mat 13.3, IA 12.1, robótica 11.9, Mecánica 11.5, архіт 9.9, Periodismo+CA 11.6; реальні входи: Computadores 9.3, телеком 9.5"],cl:[2, 2, 2, 2, 2, 2, 2],t:"Espartinas · Bormujos · Mairena del Aljarafe",f:[[3,"середня"],[5,"US+UPO"],[3,"туристичний"],[3,"€2.1k"],[4,"хвилі спеки"],[2,"45°+ влітку"]]},
+ {id:"cordoba",n:"Córdoba",c:"and",lon:-4.78,lat:37.89,b:2.4,r:1.0,cs:[3,"UCO + агро-AI · corte ~10 · ≈€760/рік"],ds:[2,"слабко"],mil:[2,"Cerro Muriano + нова Base Logística del Ejército"],u4:[3,"UCO D3/I4 · CS 8.5, Mecánica 9.9, ADE 8.2; кластери 4/6/21 не покриті — найвужчий андалузький"],cl:[1, 1, 1, 0, 0, 1, 1],t:"El Brillante/Trassierra (райони) · Almodóvar del Río · La Carlota",f:[[4,"низька"],[4,"UCO ~700"],[4,"низький"],[4,"€1.4k"],[4,"хвилі спеки"],[2,"найспекотніше місто"]]},
+ {id:"jaen",n:"Jaén",c:"and",lon:-3.79,lat:37.77,b:2.2,r:0.7,cs:[3,"EPS UJA, непогана · corte ~9 · ≈€760/рік"],ds:[1,"немає"],mil:[5,"нічого значного"],u4:[2,"UJA D3/I6/Ins3 (+кампус Linares)"],cl:[1, 1, 1, 0, 0, 1, 1],t:"La Guardia de Jaén · Los Villares · Mancha Real",f:[[5,"дешево"],[3,"UJA ~900"],[5,"нуль"],[5,"€0.9k найдешевша"],[4,"спокійно"],[2,"дуже спекотно"]]},
+ {id:"granada",n:"Гранада",c:"and",lon:-3.60,lat:37.18,b:2.4,r:1.2,cs:[5,"№1 Іспанії, топ-165 світу, AI-школа Еррери + Google hub · corte ~11.5 (IA ~12.8) · ≈€760/рік"],ds:[4,"BBAA UGR добротний + ESADA · corte BBAA ~10.8 · ≈€760/рік"],mil:[3,"вертолітна школа Armilla + штаб MADOC"],u4:[4,"UGR D2 · CS 10.0, CDIA 11.3, Inf+Mat 12.5, електроніка 11.1, архіт 10.2; БЕЗ мех/пром/аеро — кластер 3 лише хімія 7.7"],cl:[2, 2, 1, 0, 2, 2, 1],t:"Ogíjares · La Zubia · Gójar",f:[[5,"найнижча з великих"],[5,"UGR топ-300"],[4,"низький"],[4,"€1.7k"],[2,"сейсмічна зона"],[3,"континент., море 45хв"]]},
+ {id:"almeria",n:"Almería",c:"and",lon:-2.47,lat:36.84,b:2.4,r:1.2,cs:[3,"UAL, середньо · corte ~9.3 · ≈€760/рік"],ds:[2,"Escuela de Arte"],mil:[3,"Viator: база бригади Легіону"],u4:[2,"UAL D3/I5/Ins3"],cl:[1, 1, 1, 0, 0, 1, 1],t:"El Toyo-Retamar · Huércal de Almería · Aguadulce",f:[[4,"низька"],[3,"UAL ~1000"],[4,"низький"],[4,"€1.8k"],[3,"сейсміка, посуха"],[4,"найсухіше в Європі"]]},
+ {id:"malaga",n:"Малага",c:"and",lon:-4.42,lat:36.72,b:3.2,r:2.4,cs:[4,"UMA + tech-екосистема міста · corte ~10.8 · ≈€760/рік"],ds:[3,"BBAA UMA молодий + San Telmo · corte BBAA ~10 · ≈€760/рік"],mil:[4,"дрібні гарнізони"],u4:[4,"UMA · Ciber+IA 11.8, CS 10.3, robótica 10.8, Mecánica 10.6, архіт 10.8, диз.інд 9.85; телеком-школа і медіа майже без конкурсу"],cl:[2, 2, 2, 0, 2, 2, 1],t:"Rincón de la Victoria · La Cala del Moral · Alhaurín de la Torre",f:[[2,"туристична інфляція"],[4,"UMA ~800"],[1,"епіцентр рос.+номади"],[1,"€3.4k, максимум"],[3,"пожежі, посуха"],[5,"найкращий клімат"]]},
+ {id:"cadiz",n:"Cádiz",c:"and",lon:-6.29,lat:36.53,b:2.6,r:1.3,cs:[2,"UCA, базово · corte ~9.3 · ≈€760/рік"],ds:[2,"слабко"],mil:[1,"Rota: головна база ВМС США в Європі + морпіхи San Fernando"],u4:[3,"UCA D3/I5/Ins3 · naval Puerto Real (затока Navantia)"],cl:[1, 1, 1, 2, 0, 1, 1],t:"El Puerto de Santa María (Vistahermosa) · Chiclana · San Fernando",f:[[3,"середня"],[3,"UCA ~1000"],[3,"серф-хайп росте"],[3,"€2.2k"],[4,"вітер"],[4,"левante, тепло"]]},
+ {id:"baleares",n:"Balears",c:"bal",lon:2.65,lat:39.57,b:3.7,r:2.8,cs:[3,"UIB, середньо · corte ~9.3 · ≈€1,000/рік"],ds:[3,"EASDIB + ADEMA"],mil:[4,"авіабаза Son Sant Joan (невелика)"],u4:[2,"UIB D3/I4/Ins2"],cl:[1, 1, 0, 0, 0, 1, 1],t:"Marratxí · Santa Maria del Camí · Esporles",w:"ціни космос усюди",f:[[1,"найдорожчі"],[4,"UIB ~700"],[1,"перегрітий острів"],[1,"€4.7k рекорд"],[3,"шторми, DANA"],[5,"ідеальний"]]},
+ {id:"laspalmas",n:"Las Palmas",c:"can",inset:[168,700],lon:-15.41,lat:28.10,b:2.8,r:1.4,cs:[3,"ULPGC, середньо · corte ~9.3 · ≈€750/рік"],ds:[2,"слабко"],mil:[3,"авіабаза Gando + морська база"],u4:[3,"ULPGC D3/I6/Ins2 · широта 7×1, náutica"],cl:[1, 1, 1, 1, 1, 1, 1],t:"Tafira · Santa Brígida · Arucas",f:[[3,"острівна логістика"],[3,"ULPGC ~1200"],[3,"номади"],[2,"€2.5k"],[3,"вулканічний архіпелаг"],[5,"вічна весна"]]},
+ {id:"tenerife",n:"S.C. Tenerife",c:"can",inset:[85,685],lon:-16.25,lat:28.47,b:2.8,r:1.4,cs:[3,"ULL, середньо · corte ~10 · ≈€750/рік"],ds:[3,"BBAA ULL · corte BBAA ~8.5 · ≈€750/рік"],mil:[3,"штаб командування Канар"],u4:[3,"ULL D4/I5/Ins2 · широта 7×1, дизайн+журналістика"],cl:[1, 1, 1, 1, 1, 1, 1],t:"Tacoronte · El Sauzal · Santa Úrsula",f:[[3,"острівна логістика"],[4,"ULL ~600"],[2,"номад-столиця"],[2,"€2.6k"],[2,"Ла-Пальма 2021"],[5,"вічна весна"]]}
+];
+
+const clr = s => s>=4?'var(--good)':s>=3?'var(--mid)':'var(--bad)';
+const totClr = t => t>=34?'#2F6B5E':t>=28?'#C08A2E':'#B0452F';
+const factors = p => {
+  const c = COMM[p.c];
+  const lang = p.lang || c.lang;
+  return [c.irpf, lang, p.f[0], p.u4, p.f[2], p.f[3], p.f[4], p.f[5], p.mil];
+};
+const total = p => factors(p).reduce((a,x)=>a+x[0],0);
+const CLW=[1,1,1,1,.75,.5,.5], CLN=['1','2','3','4','6','17','21'];
+const CLT=['Інформатика · дані · ШІ · кібербезпека','Електроніка · телеком · робототехніка','Промислова інженерія: механічна, електрична, енергетична, хімічна','Аерокосмічна · морська · автомобільна','Архітектура · дизайн','Економіка · бізнес · фінанси · маркетинг','Комунікації · медіа · реклама · туризм'];
+const CLV=['немає','є програма','сильна програма'];
+const cov = p => p.cl.reduce((a,v,i)=>a+v*CLW[i],0);
+const net = p => COMM[p.c].net;
+
+/* ---- проєкція ---- */
+const px = lon => (lon+9.6)/13.2*1000;
+const py = lat => (44.1-lat)/8.3*720;
+
+const OUTLINE = [
+ [-8.87,43.72],[-7.0,43.6],[-5.0,43.48],[-3.0,43.45],[-1.78,43.38],
+ [-1.4,43.25],[0.7,42.85],[1.8,42.5],[3.17,42.43],[3.0,41.9],
+ [2.2,41.4],[1.0,41.05],[0.5,40.55],[0.02,39.9],[-0.32,39.45],
+ [0.2,38.73],[-0.5,38.34],[-0.98,37.58],[-1.62,37.38],[-2.12,36.74],
+ [-3.5,36.7],[-4.42,36.68],[-5.35,36.12],[-6.05,36.2],[-6.35,36.8],
+ [-6.95,37.2],[-7.4,37.18],[-7.1,38.2],[-6.9,39.0],[-7.5,39.66],
+ [-6.86,40.22],[-6.8,41.0],[-6.2,41.6],[-6.6,41.92],[-7.4,41.86],
+ [-8.2,41.9],[-8.87,41.86],[-8.9,42.3],[-9.28,42.9],[-8.87,43.72]
+];
+
+const svg = document.getElementById('map');
+const NS = 'http://www.w3.org/2000/svg';
+const el = (t,at)=>{const e=document.createElementNS(NS,t);for(const k in at)e.setAttribute(k,at[k]);return e};
+
+svg.appendChild(el('path',{class:'spain',d:'M'+OUTLINE.map(p=>px(p[0]).toFixed(1)+','+py(p[1]).toFixed(1)).join(' L ')+' Z'}));
+svg.appendChild(el('ellipse',{class:'isle',cx:px(2.65),cy:py(39.57),rx:34,ry:16}));
+svg.appendChild(el('ellipse',{class:'isle',cx:px(1.45),cy:py(38.95),rx:14,ry:9}));
+svg.appendChild(el('rect',{class:'inset-box',x:20,y:640,width:250,height:120,rx:10}));
+const il=el('text',{class:'inset-lbl',x:34,y:662}); il.textContent='КАНАРИ'; svg.appendChild(il);
+svg.appendChild(el('ellipse',{class:'isle',cx:85,cy:702,rx:26,ry:15}));
+svg.appendChild(el('ellipse',{class:'isle',cx:170,cy:715,rx:24,ry:14}));
+
+const readout = document.getElementById('readout');
+
+P.forEach(p=>{
+  const t = total(p);
+  const g = el('g',{class:'marker'}); g.dataset.id=p.id;
+  const x = p.inset ? p.inset[0] : px(p.lon);
+  const y = p.inset ? p.inset[1] : py(p.lat);
+  g.appendChild(el('circle',{cx:x,cy:y,r:8+(t-20)*0.45,fill:p.ex?'#9AA5A0':totClr(t)}));
+  const tx = el('text',{x:x,y:y}); tx.textContent=t; g.appendChild(tx);
+  g.addEventListener('click',()=>select(p.id,true));
+  svg.appendChild(g);
+});
+
+/* ---- таблиця ---- */
+const tbody = document.querySelector('#tbl tbody');
+let sortKey='tot', sortAsc=false;
+
+function render(){
+  const rows = P.slice().sort((a,b)=>{
+    if(sortKey==='name'){return sortAsc? a.n.localeCompare(b.n) : b.n.localeCompare(a.n)}
+    let va,vb;
+    if(sortKey==='tot'){va=total(a);vb=total(b)}
+    else if(sortKey==='net'){va=net(a);vb=net(b)}
+    else if(sortKey==='bud'){va=a.b;vb=b.b}
+    else if(sortKey==='rent'){va=a.r;vb=b.r}
+    else if(sortKey==='cl'){va=cov(a);vb=cov(b)}
+    else if(sortKey==='all'){va=net(a)/12-a.b-a.r;vb=net(b)/12-b.b-b.r}
+    else {va=factors(a)[+sortKey][0];vb=factors(b)[+sortKey][0]}
+    return sortAsc? va-vb : vb-va;
+  });
+  tbody.innerHTML='';
+  rows.forEach(p=>{
+    const t=total(p), f=factors(p), n=net(p), all=p.b+p.r, free=n/12-all;
+    const tr=document.createElement('tr'); tr.dataset.id=p.id;
+    if(p.ex) tr.classList.add('excluded');
+    let h=`<th>${p.n}${p.ex?'<span class="exl">✕ викл.</span>':''}<span class="region">${COMM[p.c].n}</span></th>`;
+    h+=`<td><span class="chip" style="background:${clr(f[0][0])}">${f[0][0]} · ${f[0][1]}</span></td>`;
+    h+=`<td class="money">€${n.toFixed(1)}k<small>≈€${(n/12).toFixed(2)}k/міс</small></td>`;
+    h+=`<td><span class="chip" style="background:${clr(f[1][0])}">${f[1][0]} · ${f[1][1]}</span></td>`;
+    h+=`<td><span class="chip" style="background:${clr(f[2][0])}">${f[2][0]} · ${f[2][1]}</span></td>`;
+    h+=`<td class="money">€${p.b.toFixed(1)}k/міс<small>без житла</small></td>`;
+    h+=`<td class="money">€${p.r.toFixed(1)}k/міс<small>3–4 спальні</small></td>`;
+    h+=`<td class="money" style="color:${free>=0?'var(--good)':'var(--bad)'}">€${all.toFixed(1)}k/міс<small>вільно ${free>=0?'+':''}€${free.toFixed(1)}k/міс</small></td>`;
+    h+=`<td><span class="chip" style="background:${clr(f[3][0])}">${f[3][0]}</span> <span class="subj">${f[3][1]}</span></td>`;
+    h+=`<td class="clusters">${p.cl.map((v,i)=>`<span class="cb cb${v}" title="${CLN[i]} — ${CLT[i]} (${CLV[v]})">${CLN[i]}</span>`).join('')}<span class="cov">покриття ${cov(p).toFixed(2)} з 8.5</span></td>`;
+    for(let i=4;i<9;i++) h+=`<td><span class="chip" style="background:${clr(f[i][0])}">${f[i][0]} · ${f[i][1]}</span></td>`;
+    h+=`<td class="towns">${p.t}${p.w?`<span class="warn">⚠ ${p.w}</span>`:''}</td>`;
+    h+=`<td class="total" style="color:${totClr(t)}">${t}<small>з 45</small></td>`;
+    tr.innerHTML=h;
+    tr.addEventListener('click',()=>select(p.id,false));
+    tbody.appendChild(tr);
+  });
+}
+render();
+
+document.querySelectorAll('thead th[data-k]').forEach(th=>{
+  th.addEventListener('click',()=>{
+    const k=th.dataset.k;
+    if(sortKey===k) sortAsc=!sortAsc; else {sortKey=k;sortAsc=false;}
+    document.querySelectorAll('thead th .arr').forEach(a=>a.remove());
+    const arr=document.createElement('span');arr.className='arr';arr.textContent=sortAsc?' ▲':' ▼';
+    th.appendChild(arr);
+    render();
+  });
+});
+
+function select(id,scroll){
+  const p=P.find(x=>x.id===id);
+  document.querySelectorAll('.marker').forEach(m=>{
+    m.classList.toggle('active',m.dataset.id===id);
+    m.classList.toggle('dim',m.dataset.id!==id);
+  });
+  document.querySelectorAll('#tbl tbody tr').forEach(tr=>tr.classList.toggle('active',tr.dataset.id===id));
+  const fr=net(p)/12-p.b-p.r; readout.innerHTML=`<b>${p.n}</b> · ${COMM[p.c].n} · ${total(p)} з 45 · разом €${(p.b+p.r).toFixed(1)}k/міс · вільно ${fr>=0?'+':''}€${fr.toFixed(1)}k/міс`;
+  if(scroll){
+    const row=document.querySelector(`#tbl tbody tr[data-id="${id}"]`);
+    row && row.scrollIntoView({behavior:'smooth',block:'center'});
+  }
+}
+</script>
+</body>
+</html>
